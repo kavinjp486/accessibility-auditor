@@ -3,6 +3,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
+const captureScreenshot = require("./services/screenshotService");
+const runAxeAudit = require("./services/axeService");
+
 const app = express();
 
 app.use(cors());
@@ -10,9 +13,48 @@ app.use(express.json());
 
 app.get("/", (req, res) => {
   res.json({
-    status: "Server running"
+    status: "Accessibility auditor API running"
   });
 });
+
+
+app.post("/audit", async (req, res) => {
+
+  try {
+
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({
+        error: "URL is required"
+      });
+    }
+
+    console.log("Starting audit for:", url);
+
+    const screenshotPath = await captureScreenshot(url);
+
+    const axeResults = await runAxeAudit(url);
+
+    res.json({
+      success: true,
+      screenshot: screenshotPath,
+      violations: axeResults.violations
+    });
+
+  } catch (error) {
+
+    console.error("Audit failed:", error);
+
+    res.status(500).json({
+      error: "Audit failed",
+      details: error.message
+    });
+
+  }
+
+});
+
 
 const PORT = process.env.PORT || 5000;
 
