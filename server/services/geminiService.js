@@ -1,37 +1,59 @@
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
 
+// Load env
 dotenv.config();
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY
-});
-
 export default async function getFixSuggestion(violation) {
+  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
+
+  if (!apiKey) {
+    console.error("❌ ERROR: Missing API Key in geminiService");
+    throw new Error("Missing API Key");
+  }
 
   const prompt = `
-You are a WCAG accessibility expert.
+    You are a WCAG 2.1 AA expert. 
+    Fix this HTML violation: ${violation.id}
+    Description: ${violation.description}
+    Code: ${violation.html}
+    
+    Return ONLY a valid JSON object with these keys:
+    "rule": short rule name,
+    "issue": why it failed,
+    "fix": the corrected HTML code
+  `;
 
-Violation rule: ${violation.id}
+  // THE RAW FETCH - Bypasses all SDK bugs
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
-Description: ${violation.description}
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
 
-HTML:
-${violation.html}
+    if (!response.ok) {
+      // If it fails now, we will see the EXACT error from Google, not the SDK
+      const errorText = await response.text();
+      console.error(`❌ GOOGLE API REJECTED IT (Status ${response.status}):`, errorText);
+      throw new Error(`API HTTP Error: ${response.status}`);
+    }
 
-Return JSON only:
+    const data = await response.json();
+    
+    // Extract the text
+    let textResult = data.candidates[0].content.parts[0].text;
+    
+    // Return it clean
+    return textResult;
 
-{
- "rule": "",
- "issue": "",
- "fix": ""
-}
-`;
-
-  const result = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: prompt
-  });
-
-  return result.text;
+  } catch (err) {
+    console.error("❌ Fetch Error details:", err.message);
+    throw new Error("AI Fix Generation Failed");
+  }
 }
