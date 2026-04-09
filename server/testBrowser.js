@@ -1,10 +1,12 @@
-const { chromium } = require("playwright");
+import { chromium } from "playwright";
 
 (async () => {
+
   try {
+
     console.log("Step 1: launching browser");
 
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch();
 
     console.log("Step 2: creating page");
 
@@ -12,15 +14,16 @@ const { chromium } = require("playwright");
 
     console.log("Step 3: navigating");
 
-    await page.goto("https://example.com", {
-      waitUntil: "load",
-      timeout: 30000
-    });
+    await page.goto("https://example.com");
 
-    console.log("Step 4: success");
+    console.log("Browser launched successfully");
 
     await browser.close();
+
   } catch (err) {
+
     console.error("ERROR:", err);
+
   }
+
 })();

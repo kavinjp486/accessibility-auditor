@@ -1,10 +1,10 @@
-const { chromium } = require("playwright");
-const path = require("path");
-const fs = require("fs");
+import { chromium } from "playwright";
+import path from "path";
+import fs from "fs";
 
-async function captureScreenshot(url) {
+export default async function captureScreenshot(url) {
+
   const browser = await chromium.launch({ headless: true });
-
   const page = await browser.newPage();
 
   await page.goto(url, {
@@ -13,10 +13,9 @@ async function captureScreenshot(url) {
   });
 
   const timestamp = Date.now();
-
   const filename = `screenshot-${timestamp}.png`;
 
-  const filepath = path.join(__dirname, "../../uploads", filename);
+  const filepath = path.join("uploads", filename);
 
   await page.screenshot({
     path: filepath,
@@ -27,5 +26,3 @@ async function captureScreenshot(url) {
 
   return filepath;
 }
-
-module.exports = captureScreenshot;

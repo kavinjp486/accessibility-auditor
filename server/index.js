@@ -1,10 +1,11 @@
-require("dotenv").config();
+import dotenv from "dotenv";
+import express from "express";
+import cors from "cors";
 
-const express = require("express");
-const cors = require("cors");
+import captureScreenshot from "./services/screenshotService.js";
+import runAxeAudit from "./services/axeService.js";
 
-const captureScreenshot = require("./services/screenshotService");
-const runAxeAudit = require("./services/axeService");
+dotenv.config();
 
 const app = express();
 
@@ -16,7 +17,6 @@ app.get("/", (req, res) => {
     status: "Accessibility auditor API running"
   });
 });
-
 
 app.post("/audit", async (req, res) => {
 
@@ -54,7 +54,6 @@ app.post("/audit", async (req, res) => {
   }
 
 });
-
 
 const PORT = process.env.PORT || 5000;
 
